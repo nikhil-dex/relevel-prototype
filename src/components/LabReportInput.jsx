@@ -32,6 +32,15 @@ function LabReportInput({ labData, onUpdate }) {
     { value: 'vitaminA', label: 'Vitamin A', units: ['µg/dL', 'µmol/L', 'IU/L', 'mg/L', 'ng/mL'] }
   ]
 
+  // Comprehensive list of all available units
+  const allUnits = [
+    'pg/mL', 'ng/mL', 'µg/mL', 'mg/mL', 'g/mL',
+    'pg/dL', 'ng/dL', 'µg/dL', 'mg/dL', 'g/dL',
+    'pg/L', 'ng/L', 'µg/L', 'mg/L', 'g/L',
+    'pmol/L', 'nmol/L', 'µmol/L', 'mmol/L', 'mol/L',
+    'mEq/L', 'IU/L', 'U/L', 'kU/L'
+  ]
+
   const intakeOptions = [
     'Milk', 'Eggs', 'Fish', 'Meat', 'Poultry', 'Legumes', 'Nuts', 'Seeds',
     'Whole Grains', 'Leafy Greens', 'Fruits', 'Vegetables', 'Dairy Products',
@@ -199,27 +208,36 @@ function LabReportInput({ labData, onUpdate }) {
 
   const selectedNutrientInfo = getSelectedNutrientInfo()
 
-  const renderDropdown = (dropdownName, options, placeholder, selectedValue, onSelect, disabled = false) => (
+  // Get units to display - prioritize nutrient-specific units, then show all units
+  const getUnitsToDisplay = (dropdownName) => {
+    if (selectedNutrientInfo && selectedNutrientInfo.units) {
+      // Show nutrient-specific units first, then all other units
+      const specificUnits = selectedNutrientInfo.units
+      const otherUnits = allUnits.filter(unit => !specificUnits.includes(unit))
+      return [...specificUnits, ...otherUnits]
+    }
+    return allUnits
+  }
+
+  const renderDropdown = (dropdownName, options, placeholder, selectedValue, onSelect) => (
     <div ref={dropdownRefs[dropdownName]} style={{ position: 'relative', width: '100%' }}>
       <button
         type="button"
-        onClick={() => !disabled && toggleDropdown(dropdownName)}
+        onClick={() => toggleDropdown(dropdownName)}
         style={{
           width: '100%',
           padding: '12px',
           border: `2px solid ${errors[dropdownName] ? '#EF4444' : 'var(--beige-light)'}`,
           borderRadius: '8px',
           fontSize: '16px',
-          backgroundColor: disabled ? 'var(--beige-light)' : 'var(--white)',
+          backgroundColor: 'var(--white)',
           textAlign: 'left',
-          cursor: disabled ? 'not-allowed' : 'pointer',
+          cursor: 'pointer',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          transition: 'border-color 0.3s ease',
-          opacity: disabled ? 0.6 : 1
+          transition: 'border-color 0.3s ease'
         }}
-        disabled={disabled}
       >
         {selectedValue || placeholder}
         <ChevronDown size={20} style={{ 
@@ -228,7 +246,7 @@ function LabReportInput({ labData, onUpdate }) {
         }} />
       </button>
       
-      {dropdownsOpen[dropdownName] && !disabled && (
+      {dropdownsOpen[dropdownName] && (
         <div style={{
           position: 'absolute',
           top: '100%',
@@ -446,11 +464,10 @@ function LabReportInput({ labData, onUpdate }) {
                   <div style={{ minWidth: '120px' }}>
                     {renderDropdown(
                       'currentUnit',
-                      selectedNutrientInfo?.units || [],
+                      getUnitsToDisplay('currentUnit'),
                       'Unit',
                       formData.currentUnit,
-                      (unit) => selectOption('currentUnit', unit),
-                      !formData.selectedNutrient
+                      (unit) => selectOption('currentUnit', unit)
                     )}
                   </div>
                 </div>
@@ -537,11 +554,10 @@ function LabReportInput({ labData, onUpdate }) {
                   <div style={{ minWidth: '120px' }}>
                     {renderDropdown(
                       'targetUnit',
-                      selectedNutrientInfo?.units || [],
+                      getUnitsToDisplay('targetUnit'),
                       'Unit',
                       formData.targetUnit,
-                      (unit) => selectOption('targetUnit', unit),
-                      !formData.selectedNutrient
+                      (unit) => selectOption('targetUnit', unit)
                     )}
                   </div>
                 </div>
